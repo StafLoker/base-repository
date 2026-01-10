@@ -1,0 +1,15 @@
+[includeIf "gitdir:~/<path to personal projects>/"]
+    path = .gitconfig-personal
+[includeIf "gitdir:~/<path to academic projects>/"]
+    path = .gitconfig-academic
+[includeIf "gitdir:~/<path to work projects>/"]
+    path = .gitconfig-work
+    
+[init]
+	defaultBranch = main
+[merge]
+	ff = false 
+[pull]
+	ff = true
+[gpg]
+	program = gpg

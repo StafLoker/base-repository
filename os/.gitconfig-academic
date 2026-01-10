@@ -1,0 +1,7 @@
+[user]
+	name = <name>
+	email = <academic email>
+[commit]
+	gpgsign = false
+[tag]
+    forceSignAnnotated = false
