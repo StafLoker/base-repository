@@ -218,12 +218,56 @@ setup_license() {
     done
 }
 
+# Get list of available README templates from repository
+get_available_readmes() {
+    local readmes_url="${BASE_URL}/readmes/"
+    local available_readmes=()
+
+    # Available README templates
+    available_readmes=("opensource-project")
+
+    echo "${available_readmes[@]}"
+}
+
 # Download README template
 setup_readme() {
-    if ask_yes_no "Do you want to add README template?" "y"; then
-        download_file "readmes/opensource-project.md" "README.md"
-        print_warning "Don't forget to customize README.md with your project information!"
-    fi
+    echo ""
+    print_info "Available README templates:"
+    echo ""
+
+    # Get available READMEs
+    local readmes=($(get_available_readmes))
+
+    # Show menu
+    local i=1
+    for readme in "${readmes[@]}"; do
+        echo "  $i) $readme"
+        ((i++))
+    done
+    echo "  0) Skip - Don't add a README"
+    echo ""
+
+    while true; do
+        read -p "$(echo -e "${BLUE}?${NC} Select a README template [0-${#readmes[@]}]: ")" readme_choice
+
+        if [ "$readme_choice" = "0" ]; then
+            print_info "Skipping README"
+            return 0
+        elif [ "$readme_choice" -ge 1 ] && [ "$readme_choice" -le "${#readmes[@]}" ]; then
+            local selected_readme="${readmes[$((readme_choice-1))]}"
+            print_info "Selected: $selected_readme"
+
+            download_file "readmes/$selected_readme.md" "README.md"
+
+            # Check if download was successful
+            if [ -f "README.md" ]; then
+                print_warning "Don't forget to customize README.md with your project information!"
+            fi
+            return 0
+        else
+            print_warning "Please enter a number between 0 and ${#readmes[@]}"
+        fi
+    done
 }
 
 # Initialize git repository and commit
@@ -245,12 +289,7 @@ setup_git_repo() {
                     git add "$file"
                 done
 
-                git commit -m "Initial commit: project setup
-
-Files added:
-$(printf '- %s\n' "${DOWNLOADED_FILES[@]}")
-
-Generated with base-repository setup script"
+                git commit -m "Initial commit"
                 print_success "Initial commit created (${#DOWNLOADED_FILES[@]} files)"
             fi
         fi
@@ -289,7 +328,7 @@ template_standard() {
     print_info "Installing Standard Template..."
     echo "  • Git configuration (.gitignore, .gitattributes)"
     echo "  • Editor configuration (.editorconfig)"
-    echo "  • MIT License"
+    echo "  • License"
     echo ""
 
     setup_git
@@ -303,8 +342,8 @@ template_full() {
     print_info "Installing Full Open Source Template..."
     echo "  • Git configuration (.gitignore, .gitattributes)"
     echo "  • Editor configuration (.editorconfig)"
-    echo "  • MIT License"
-    echo "  • Open Source README template"
+    echo "  • License"
+    echo "  • README"
     echo ""
 
     setup_git
@@ -335,7 +374,7 @@ template_custom() {
 show_menu() {
     echo ""
     echo -e "${GREEN}╔════════════════════════════════════════════╗${NC}"
-    echo -e "${GREEN}║     Base Repository Setup Script          ║${NC}"
+    echo -e "${GREEN}║        Base Repository Setup Script        ║${NC}"
     echo -e "${GREEN}╚════════════════════════════════════════════╝${NC}"
     echo ""
     echo "Select a template to install:"
