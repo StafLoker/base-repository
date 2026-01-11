@@ -25,33 +25,21 @@ merge_file_content() {
     local temp_file="$2"
 
     # Save existing content
-    local existing_content=$(cat "$existing_file")
+    local existing_backup="${existing_file}.backup"
+    cp "$existing_file" "$existing_backup"
 
-    # Copy new file content
+    # Copy new file and append existing content at the end
     cp "$temp_file" "$existing_file"
+    echo "" >> "$existing_file"
+    echo "#############" >> "$existing_file"
+    echo "## Project ##" >> "$existing_file"
+    echo "#############" >> "$existing_file"
+    echo "" >> "$existing_file"
+    cat "$existing_backup" >> "$existing_file"
 
-    # Find the line with "# ..." under ## Project ##
-    # Insert existing content after it
-    if grep -q "^# \.\.\.$" "$existing_file"; then
-        # Create temp file with merged content
-        awk -v content="$existing_content" '
-        /^# \.\.\.$/ {
-            print
-            print ""
-            print content
-            next
-        }
-        {print}
-        ' "$existing_file" > "${existing_file}.merged"
-
-        mv "${existing_file}.merged" "$existing_file"
-        rm -f "$temp_file"
-        print_success "Merged existing content into: $existing_file"
-    else
-        # If no "# ..." found, just use the new file
-        rm -f "$temp_file"
-        print_warning "Could not find '# ...' marker, file replaced"
-    fi
+    rm -f "$temp_file"
+    rm -f "$existing_backup"
+    print_success "Merged existing content into: $existing_file"
 }
 
 # Download file from repository
@@ -70,7 +58,7 @@ download_file() {
             echo ""
             echo "What would you like to do?"
             echo "  1) Replace - Delete existing file and use new one"
-            echo "  2) Merge   - Keep new file and add existing content under '# ...' in ## Project ## section"
+            echo "  2) Merge   - Add new content first, then existing content under ## Project ## section"
             echo "  3) Skip    - Keep existing file, don't download"
             echo ""
 
