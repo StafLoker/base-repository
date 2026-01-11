@@ -1,38 +1,18 @@
-# Base repository
+# Base Repository
 
-Language-agnostic development configuration files for any project.
+Language-agnostic configuration files for any project.
 
 ## Contents
 
-### Editor
-
-- `editor/.editorconfig` — Code style consistency across editors
-
-### Git
-
-- `git/.gitignore` — Common ignore patterns
-- `git/.gitattributes` — Git attributes configuration
-
-### Licenses
-
-- `licenses/MIT` — MIT License template
-
-### OS
-
-- `os/.gitconfig` — Git configuration with conditional includes for different profiles
-- `os/.gitconfig-personal` — Personal Git profile settings (example)
-- `os/.gitconfig-work` — Work Git profile settings (example)
-- `os/.gitconfig-academic` — Academic Git profile settings (example)
-
-### READMEs
-
-- `readmes/opensource-project.md` — Open source project README template
+- **[editor/](editor/)** — Code style configuration
+- **[git/](git/)** — Git ignore patterns and attributes
+- **[licenses/](licenses/)** — License templates
+- **[os/](os/)** — System-level Git configuration
+- **[readmes/](readmes/)** — README templates
 
 ## Usage
 
-Copy the relevant files to your project root.
-
-The `os/` directory contains system-level Git configuration files meant to be placed in your home directory, not in individual projects. You can create as many or as few profile configurations as needed (personal, work, academic are just examples).
+Copy the relevant files to your project. See each folder's README for details.
 
 ## License
 
