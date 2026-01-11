@@ -10,23 +10,104 @@ NC='\033[0m' # No Color
 # Base URL for raw files
 BASE_URL="https://raw.githubusercontent.com/StafLoker/base-repository/main"
 
+# Array to track downloaded files for git add
+DOWNLOADED_FILES=()
+
 # Print colored messages
 print_success() { echo -e "${GREEN}✓${NC} $1"; }
 print_error() { echo -e "${RED}✗${NC} $1"; }
 print_info() { echo -e "${BLUE}ℹ${NC} $1"; }
 print_warning() { echo -e "${YELLOW}⚠${NC} $1"; }
 
+# Merge content into existing file under ## Project ## section
+merge_file_content() {
+    local existing_file="$1"
+    local temp_file="$1.temp"
+
+    # Save existing content
+    local existing_content=$(cat "$existing_file")
+
+    # Copy new file content
+    cp "$temp_file" "$existing_file"
+
+    # Find the line with "# ..." under ## Project ##
+    # Insert existing content after it
+    if grep -q "^# \.\.\.$" "$existing_file"; then
+        # Create temp file with merged content
+        awk -v content="$existing_content" '
+        /^# \.\.\.$/ {
+            print
+            print ""
+            print content
+            next
+        }
+        {print}
+        ' "$existing_file" > "${existing_file}.merged"
+
+        mv "${existing_file}.merged" "$existing_file"
+        rm -f "$temp_file"
+        print_success "Merged existing content into: $existing_file"
+    else
+        # If no "# ..." found, just use the new file
+        rm -f "$temp_file"
+        print_warning "Could not find '# ...' marker, file replaced"
+    fi
+}
+
 # Download file from repository
 download_file() {
     local file_path="$1"
     local dest_path="$2"
     local url="${BASE_URL}/${file_path}"
+    local temp_dest="${dest_path}.download_temp"
 
-    if curl -fsSL "$url" -o "$dest_path" 2>/dev/null; then
-        print_success "Downloaded: $dest_path"
-        return 0
+    # Download to temporary file first
+    if curl -fsSL "$url" -o "$temp_dest" 2>/dev/null; then
+        # Check if file already exists
+        if [ -f "$dest_path" ]; then
+            echo ""
+            print_warning "File already exists: $dest_path"
+            echo ""
+            echo "What would you like to do?"
+            echo "  1) Replace - Delete existing file and use new one"
+            echo "  2) Merge   - Keep new file and add existing content under '# ...' in ## Project ## section"
+            echo "  3) Skip    - Keep existing file, don't download"
+            echo ""
+
+            while true; do
+                read -p "$(echo -e "${BLUE}?${NC} Enter your choice [1-3]: ")" file_choice
+                case $file_choice in
+                    1)
+                        mv "$temp_dest" "$dest_path"
+                        print_success "Replaced: $dest_path"
+                        DOWNLOADED_FILES+=("$dest_path")
+                        return 0
+                        ;;
+                    2)
+                        merge_file_content "$dest_path" "$temp_dest"
+                        DOWNLOADED_FILES+=("$dest_path")
+                        return 0
+                        ;;
+                    3)
+                        rm -f "$temp_dest"
+                        print_info "Skipped: $dest_path"
+                        return 0
+                        ;;
+                    *)
+                        print_warning "Please enter 1, 2, or 3."
+                        ;;
+                esac
+            done
+        else
+            # File doesn't exist, just move it
+            mv "$temp_dest" "$dest_path"
+            print_success "Downloaded: $dest_path"
+            DOWNLOADED_FILES+=("$dest_path")
+            return 0
+        fi
     else
         print_error "Failed to download: $file_path"
+        rm -f "$temp_dest"
         return 1
     fi
 }
@@ -75,24 +156,66 @@ setup_editor() {
     download_file "editor/.editorconfig" ".editorconfig"
 }
 
-# Download MIT license
+# Get list of available licenses from repository
+get_available_licenses() {
+    local licenses_url="${BASE_URL}/licenses/"
+    local available_licenses=()
+
+    # Try to fetch license files list
+    # For now, we know MIT exists. In future, could parse directory listing
+    available_licenses=("MIT")
+
+    echo "${available_licenses[@]}"
+}
+
+# Download license
 setup_license() {
-    if ask_yes_no "Do you want to add MIT License?" "y"; then
-        download_file "licenses/MIT" "LICENSE"
+    echo ""
+    print_info "Available licenses:"
+    echo ""
 
-        # Ask for name and year
-        read -p "$(echo -e "${BLUE}?${NC} Your name or organization: ")" name
-        read -p "$(echo -e "${BLUE}?${NC} Year (default: $(date +%Y)): ")" year
-        year=${year:-$(date +%Y)}
+    # Get available licenses
+    local licenses=($(get_available_licenses))
 
-        # Replace placeholders in LICENSE
-        if [ -f "LICENSE" ]; then
-            sed -i.bak "s/<year>/$year/g" "LICENSE" 2>/dev/null || sed -i "" "s/<year>/$year/g" "LICENSE"
-            sed -i.bak "s/<name>/$name/g" "LICENSE" 2>/dev/null || sed -i "" "s/<name>/$name/g" "LICENSE"
-            rm -f "LICENSE.bak"
-            print_success "License configured with $name ($year)"
+    # Show menu
+    local i=1
+    for license in "${licenses[@]}"; do
+        echo "  $i) $license"
+        ((i++))
+    done
+    echo "  0) Skip - Don't add a license"
+    echo ""
+
+    while true; do
+        read -p "$(echo -e "${BLUE}?${NC} Select a license [0-${#licenses[@]}]: ")" license_choice
+
+        if [ "$license_choice" = "0" ]; then
+            print_info "Skipping license"
+            return 0
+        elif [ "$license_choice" -ge 1 ] && [ "$license_choice" -le "${#licenses[@]}" ]; then
+            local selected_license="${licenses[$((license_choice-1))]}"
+            print_info "Selected: $selected_license"
+
+            download_file "licenses/$selected_license" "LICENSE"
+
+            # Check if download was successful
+            if [ -f "LICENSE" ]; then
+                # Ask for name and year
+                read -p "$(echo -e "${BLUE}?${NC} Your name or organization: ")" name
+                read -p "$(echo -e "${BLUE}?${NC} Year (default: $(date +%Y)): ")" year
+                year=${year:-$(date +%Y)}
+
+                # Replace placeholders in LICENSE
+                sed -i.bak "s/<year>/$year/g" "LICENSE" 2>/dev/null || sed -i "" "s/<year>/$year/g" "LICENSE"
+                sed -i.bak "s/<name>/$name/g" "LICENSE" 2>/dev/null || sed -i "" "s/<name>/$name/g" "LICENSE"
+                rm -f "LICENSE.bak"
+                print_success "License configured with $name ($year)"
+            fi
+            return 0
+        else
+            print_warning "Please enter a number between 0 and ${#licenses[@]}"
         fi
-    fi
+    done
 }
 
 # Download README template
@@ -105,32 +228,45 @@ setup_readme() {
 
 # Initialize git repository and commit
 setup_git_repo() {
+    # Check if there are any downloaded files to commit
+    if [ ${#DOWNLOADED_FILES[@]} -eq 0 ]; then
+        print_info "No files were downloaded, skipping git operations"
+        return 0
+    fi
+
     if [ ! -d ".git" ]; then
         if ask_yes_no "Initialize git repository?" "y"; then
             git init
             print_success "Git repository initialized"
 
-            if ask_yes_no "Commit all downloaded files?" "y"; then
-                git add .
+            if ask_yes_no "Commit downloaded files?" "y"; then
+                # Add only downloaded files
+                for file in "${DOWNLOADED_FILES[@]}"; do
+                    git add "$file"
+                done
+
                 git commit -m "Initial commit: project setup
 
 Files added:
-- Git configuration (.gitignore, .gitattributes)
-- Editor configuration (.editorconfig)
-- License and README templates
+$(printf '- %s\n' "${DOWNLOADED_FILES[@]}")
 
 Generated with base-repository setup script"
-                print_success "Initial commit created"
+                print_success "Initial commit created (${#DOWNLOADED_FILES[@]} files)"
             fi
         fi
     else
         print_info "Git repository already exists"
         if ask_yes_no "Commit downloaded files?" "y"; then
-            git add .
+            # Add only downloaded files
+            for file in "${DOWNLOADED_FILES[@]}"; do
+                git add "$file"
+            done
+
             git commit -m "Add base configuration files
 
-Files added via base-repository setup script"
-            print_success "Files committed"
+Files added via base-repository setup script:
+$(printf '- %s\n' "${DOWNLOADED_FILES[@]}")"
+            print_success "Files committed (${#DOWNLOADED_FILES[@]} files)"
         fi
     fi
 }
