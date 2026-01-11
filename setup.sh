@@ -22,7 +22,7 @@ print_warning() { echo -e "${YELLOW}⚠${NC} $1"; }
 # Merge content into existing file under ## Project ## section
 merge_file_content() {
     local existing_file="$1"
-    local temp_file="$1.temp"
+    local temp_file="$2"
 
     # Save existing content
     local existing_content=$(cat "$existing_file")
