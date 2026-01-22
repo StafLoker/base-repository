@@ -1,0 +1,66 @@
+# yaml-language-server: $schema=https://json.schemastore.org/clang-format-21.x.json
+---
+# Indentation
+IndentWidth: 4
+UseTab: Never
+
+# Line length
+ColumnLimit: 150
+
+# Pointers and references
+PointerAlignment: Right
+DerivePointerAlignment: false
+
+# Includes
+SortIncludes:
+  Enabled: true
+  IgnoreCase: false
+
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex:           '^<[^/]+>$'
+    Priority:        1
+  - Regex:           '^<'
+    Priority:        2
+  - Regex:           '^"(clients|handlers|models)/'
+    Priority:        4
+  - Regex:           '^"'
+    Priority:        3
+
+# Functions
+AllowShortFunctionsOnASingleLine: None
+
+# Braces
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true
+
+
+AlignConsecutiveAssignments: Consecutive
+AlignConsecutiveDeclarations: Consecutive
+
+# Function parameters formatting
+BinPackParameters: OnePerLine
+BinPackArguments: false
+AllowAllParametersOfDeclarationOnNextLine: false
+
+# Other
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 1
+---
+Language: C
+
+---
+Language: Cpp
+Standard: c++17
+
+NamespaceIndentation: None
+
+BraceWrapping:
+  AfterClass: true
+Cpp11BracedListStyle: true
+
+# Namespaces
+CompactNamespaces: false
+FixNamespaceComments: true
+---
