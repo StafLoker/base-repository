@@ -4,4 +4,4 @@
 [commit]
 	gpgsign = false
 [tag]
-    forceSignAnnotated = false
+    gpgsign = true
