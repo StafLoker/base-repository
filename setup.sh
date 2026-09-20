@@ -138,6 +138,12 @@ setup_git() {
     download_file "git/.gitattributes" ".gitattributes"
 }
 
+# Download editor configuration
+setup_editor() {
+    print_info "Setting up editor configuration..."
+    download_file "editor/.editorconfig" ".editorconfig"
+}
+
 # Download C/C++ configuration
 setup_c_family() {
     print_info "Setting up C/C++ configuration..."
@@ -324,26 +330,30 @@ offer_remaining() {
     fi
 }
 
-# Template: Basic (Git)
+# Template: Basic (Git + Editor)
 template_basic() {
     echo ""
     print_info "Installing Basic Template..."
     echo "  • Git configuration (.gitignore, .gitattributes)"
+    echo "  • Editor configuration (.editorconfig)"
     echo ""
 
     setup_git
+    setup_editor
     offer_remaining "0" "0"
 }
 
-# Template: Standard (Git + README)
+# Template: Standard (Git + Editor + README)
 template_standard() {
     echo ""
     print_info "Installing Standard Template..."
     echo "  • Git configuration (.gitignore, .gitattributes)"
+    echo "  • Editor configuration (.editorconfig)"
     echo "  • README"
     echo ""
 
     setup_git
+    setup_editor
     setup_readme
     offer_remaining "0" "1"
 }
@@ -356,6 +366,10 @@ template_custom() {
 
     if ask_yes_no "Include Git configuration?" "y"; then
         setup_git
+    fi
+
+    if ask_yes_no "Include Editor configuration?" "y"; then
+        setup_editor
     fi
 
     if ask_yes_no "Include C/C++ configuration (.clang-format, Makefile)?" "n"; then
@@ -375,8 +389,8 @@ show_menu() {
     echo ""
     echo "Select a template to install:"
     echo ""
-    echo "  1) Basic              - Git"
-    echo "  2) Standard           - Git + README"
+    echo "  1) Basic              - Git + Editor"
+    echo "  2) Standard           - Git + Editor + README"
     echo "  3) Custom             - Choose components"
     echo ""
     echo "  0) Exit"
