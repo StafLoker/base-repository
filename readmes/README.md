@@ -4,6 +4,7 @@ README templates for different project types.
 
 ## Files
 
+- **`project.md`** — Lightweight template for general projects
 - **`opensource-project.md`** — Complete template for open source projects
 
 ## Usage
@@ -12,6 +13,25 @@ README templates for different project types.
 2. Replace all placeholders (uppercase text and text within `<>`)
 3. Add your images (logo, screenshots)
 4. Customize sections according to your project
+
+## Project Template
+
+For internal, personal or non-published projects — no GitHub badges or
+release links.
+
+Includes:
+- Header with logo, name, and slogan
+- Short description with screenshot
+- Features list
+- Requirements
+- Commands
+- Configuration (environment variables table)
+
+Replace:
+- `PROJECT NAME` — Project name
+- `SLOGAN` — Project slogan
+- `SHORT DESCRIPTION` — Brief description
+- Add your own sections as needed (e.g. Deployment, Documentation)
 
 ## Open Source Project Template
 

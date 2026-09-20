@@ -18,10 +18,9 @@ bash -c "$(wget -qO- https://raw.githubusercontent.com/StafLoker/base-repository
 
 ### Templates Available
 
-1. **Basic** — Git + Editor configuration
-2. **Standard** — Git + Editor + License
-3. **Full Open Source** — Git + Editor + License + README
-4. **Custom** — Choose individual components
+1. **Basic** — Git configuration (offers License, README and C/C++ afterward)
+2. **Standard** — Git + README (offers License and C/C++ afterward)
+3. **Custom** — Choose individual components, including C/C++
 
 The script will:
 - Download selected configuration files
@@ -31,7 +30,7 @@ The script will:
 
 ## Contents
 
-- **[editor/](editor/)** — Code style configuration
+- **[c-family/](c-family/)** — C/C++ formatting config and Makefile targets
 - **[git/](git/)** — Git ignore patterns and attributes
 - **[licenses/](licenses/)** — License templates
 - **[os/](os/)** — System-level Git configuration

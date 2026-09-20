@@ -138,10 +138,11 @@ setup_git() {
     download_file "git/.gitattributes" ".gitattributes"
 }
 
-# Download editor configuration
-setup_editor() {
-    print_info "Setting up editor configuration..."
-    download_file "editor/.editorconfig" ".editorconfig"
+# Download C/C++ configuration
+setup_c_family() {
+    print_info "Setting up C/C++ configuration..."
+    download_file "c-family/.clang-format" ".clang-format"
+    download_file "c-family/Makefile" "Makefile"
 }
 
 # Get list of available licenses from repository
@@ -151,7 +152,7 @@ get_available_licenses() {
 
     # Try to fetch license files list
     # For now, we know MIT exists. In future, could parse directory listing
-    available_licenses=("MIT")
+    available_licenses=("MIT" "Apache-2.0" "GPL-3.0")
 
     echo "${available_licenses[@]}"
 }
@@ -212,7 +213,7 @@ get_available_readmes() {
     local available_readmes=()
 
     # Available README templates
-    available_readmes=("opensource-project")
+    available_readmes=("project" "opensource-project")
 
     echo "${available_readmes[@]}"
 }
@@ -298,46 +299,53 @@ $(printf '- %s\n' "${DOWNLOADED_FILES[@]}")"
     fi
 }
 
-# Template: Basic (Git + Editor)
+# Offer everything a quick template didn't already install
+offer_remaining() {
+    local skip_license="$1"
+    local skip_readme="$2"
+
+    echo ""
+    if ask_yes_no "Add anything else? (License, README, C/C++)" "n"; then
+        if [ "$skip_license" != "1" ]; then
+            setup_license
+        elif ask_yes_no "Include a License?" "n"; then
+            setup_license
+        fi
+
+        if [ "$skip_readme" != "1" ]; then
+            setup_readme
+        elif ask_yes_no "Include a README?" "n"; then
+            setup_readme
+        fi
+
+        if ask_yes_no "Include C/C++ configuration (.clang-format, Makefile)?" "n"; then
+            setup_c_family
+        fi
+    fi
+}
+
+# Template: Basic (Git)
 template_basic() {
     echo ""
     print_info "Installing Basic Template..."
     echo "  • Git configuration (.gitignore, .gitattributes)"
-    echo "  • Editor configuration (.editorconfig)"
     echo ""
 
     setup_git
-    setup_editor
+    offer_remaining "0" "0"
 }
 
-# Template: Standard (Git + Editor + License)
+# Template: Standard (Git + README)
 template_standard() {
     echo ""
     print_info "Installing Standard Template..."
     echo "  • Git configuration (.gitignore, .gitattributes)"
-    echo "  • Editor configuration (.editorconfig)"
-    echo "  • License"
-    echo ""
-
-    setup_git
-    setup_editor
-    setup_license
-}
-
-# Template: Full Open Source (Git + Editor + License + README)
-template_full() {
-    echo ""
-    print_info "Installing Full Open Source Template..."
-    echo "  • Git configuration (.gitignore, .gitattributes)"
-    echo "  • Editor configuration (.editorconfig)"
-    echo "  • License"
     echo "  • README"
     echo ""
 
     setup_git
-    setup_editor
-    setup_license
     setup_readme
+    offer_remaining "0" "1"
 }
 
 # Custom template - ask for each component
@@ -350,8 +358,8 @@ template_custom() {
         setup_git
     fi
 
-    if ask_yes_no "Include Editor configuration?" "y"; then
-        setup_editor
+    if ask_yes_no "Include C/C++ configuration (.clang-format, Makefile)?" "n"; then
+        setup_c_family
     fi
 
     setup_license
@@ -367,10 +375,9 @@ show_menu() {
     echo ""
     echo "Select a template to install:"
     echo ""
-    echo "  1) Basic              - Git + Editor"
-    echo "  2) Standard           - Git + Editor + License"
-    echo "  3) Full Open Source   - Git + Editor + License + README"
-    echo "  4) Custom             - Choose components"
+    echo "  1) Basic              - Git"
+    echo "  2) Standard           - Git + README"
+    echo "  3) Custom             - Choose components"
     echo ""
     echo "  0) Exit"
     echo ""
@@ -415,9 +422,6 @@ main() {
             template_standard
             ;;
         3)
-            template_full
-            ;;
-        4)
             template_custom
             ;;
         0)
